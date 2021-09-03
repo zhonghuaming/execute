@@ -1,0 +1,11 @@
+externalAccess:
+  autoDiscovery:
+    enabled: true
+  enabled: true
+  service:
+    port: 9094
+    type: LoadBalancer
+#rbac:
+#  create: true
+#serviceAccount:
+#  create: true
