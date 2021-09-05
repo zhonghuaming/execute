@@ -5,7 +5,7 @@ externalAccess:
   service:
     port: 9094
     type: LoadBalancer
-#rbac:
-#  create: true
-#serviceAccount:
-#  create: true
+rbac:
+  create: true
+serviceAccount:
+  create: true

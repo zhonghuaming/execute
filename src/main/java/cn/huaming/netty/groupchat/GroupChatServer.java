@@ -8,7 +8,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 
-public class GroupChatServer {
+public class  GroupChatServer {
 
     private int port; //监听端口
 
@@ -62,6 +62,6 @@ public class GroupChatServer {
 
     public static void main(String[] args) throws Exception {
 
-        new GroupChatServer(7000).run();
+        new GroupChatServer(7001).run();
     }
 }
