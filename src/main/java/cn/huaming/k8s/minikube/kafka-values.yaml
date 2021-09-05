@@ -3,8 +3,7 @@ externalAccess:
     enabled: true
   enabled: true
   service:
-    port: 9094
-    type: LoadBalancer
+    type: NodePort
 rbac:
   create: true
 serviceAccount:

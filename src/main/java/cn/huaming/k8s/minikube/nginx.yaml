@@ -1,15 +1,18 @@
 apiVersion: apps/v1
+# DaemonSet 确保全部（或者某些）节点上运行一个 Pod 的副本。
+# ReplicaSet 维护一组在任何时候都处于运行状态的 Pod 副本的稳定集合。
+# Deployment 为 Pods 和 ReplicaSets 提供声明式的 更新 能力。
 kind: Deployment
 metadata:
   name: nginx-deployment
 spec:
-  selector:
+  selector: #定义 Deployment 如何查找要管理的Pods
     matchLabels:
       app: nginx
-  replicas: 1 # tells deployment to run 2 pods matching the template
+  replicas: 1 # 告诉部署运行x个与模板匹配的pod
   template:
     metadata:
-      labels:
+      labels: # 对pod打标签
         app: nginx
     spec:
       containers:
@@ -32,4 +35,4 @@ spec:
       nodePort: 30004
       protocol: TCP
   selector:
-    name: nginx
+    app: nginx #定义 Deployment 如何查找要管理的
