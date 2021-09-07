@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: command-demo
+  labels:
+    purpose: demonstrate-command
+spec:
+  containers:
+    - name: command-demo-container
+      image: debian
+      #方式一
+      command: ["printenv"]
+      args: ["HOSTNAME", "KUBERNETES_PORT"]
+      #方式二
+      env:
+        - name: MESSAGE
+          value: "hello world"
+      command: [ "/bin/echo" ]
+      args: [ "$(MESSAGE)" ]
+      #方式三
+      command: [ "/bin/sh" ]
+      args: [ "-c", "while true; do echo hello; sleep 10;done" ]
+  restartPolicy: OnFailure
+
+#  描述	         Docker字段名称	 Kubernetes 字段名称
+#  容器执行的命令	 Entrypoint	      command
+#  传给命令的参数	 Cmd	          args
