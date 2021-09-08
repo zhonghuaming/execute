@@ -229,3 +229,5 @@ spec:
 
 #kubectl run mysql-client-loop --image=mysql:5.7 -i -t --rm --restart=Never --\
 #  bash -ic "while sleep 1; do mysql -h mysql-read -e 'SELECT @@server_id,NOW()'; done"
+
+#https://kubernetes.io/zh/docs/tasks/run-application/run-replicated-stateful-application/#%E6%B8%85%E7%90%86%E7%8E%B0%E5%9C%BA
