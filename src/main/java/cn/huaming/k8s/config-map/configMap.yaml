@@ -24,7 +24,7 @@ data:
     color.bad=yellow
     allow.textmode=true
 
-----
+---
 
 apiVersion: v1
 kind: Pod
