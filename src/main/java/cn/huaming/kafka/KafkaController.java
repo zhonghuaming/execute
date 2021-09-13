@@ -16,7 +16,7 @@ public class KafkaController {
 
     @Autowired
     private KafkaSender kafkaSender;
-kube
+
     @GetMapping("/send/{msg}")
     public void sendMessage(@PathVariable("msg") String msg) {
         kafkaSender.send(msg);
