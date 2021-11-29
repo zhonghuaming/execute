@@ -27,7 +27,6 @@ public class NIOServer {
         System.out.println("注册后的selectionkey 数量=" + selector.keys().size()); // 1
 
 
-
         //循环等待客户端连接
         while (true) {
 
