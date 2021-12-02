@@ -1,0 +1,32 @@
+version: "3"
+services:
+  canal-admin:
+    image: hb.shencom.cn/scloud/canal-admin:latest
+    container_name: canal-admin
+    environment:
+      server.port: 8089
+      canal.adminUser: admin
+      canal.adminPasswd: admin
+    ports:
+      - "8089:8089"
+    depends_on:
+      - canal-server
+    restart: on-failure
+  canal-server:
+    image: hb.shencom.cn/scloud/canal-server:latest
+    container_name: canal-server
+    environment:
+      master.address: 192.168.1.222:33306
+      canal.instance.dbUsername: canal
+      canal.instance.dbPassword: iSc_1234
+      canal.instance.connectionCharset: UTF-8
+      canal.instance.tsdb.enable: "true"
+      canal.instance.gtidon: "false"
+      canal.instance.filter.regex: .*\\\..*
+      canal.admin.manager: canal-admin:8089
+      canal.admin.port: 11110
+      canal.admin.user: admin
+      canal.admin.passwd: 4ACFE3202A5FF5CF467898FC58AAB1D615029441
+    volumes:
+      - ./data/logs:/home/admin/canal-server/logs
+    restart: on-failure
