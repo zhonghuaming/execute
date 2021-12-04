@@ -15,6 +15,7 @@ import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindo
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
 
 /**
  * @auther: ZHM
@@ -24,7 +25,7 @@ import org.apache.flink.util.Collector;
 public class EventTimeWmTest {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        test2(env);
+        testWatermark(env);
         env.execute();
 
     }
@@ -36,7 +37,7 @@ public class EventTimeWmTest {
      * @param env
      * @return
      */
-    public static void test1(StreamExecutionEnvironment env) {
+    public static void testWindow(StreamExecutionEnvironment env) {
 
         DataStreamSource<String> dataStream = env.socketTextStream("127.0.0.1", 9999);
         SingleOutputStreamOperator<String> operator = dataStream
@@ -68,17 +69,28 @@ public class EventTimeWmTest {
     }
 
     /**
-     * 时间字段，单词，次数
+     * Watermark 允许窗口延迟触发的机制。
+     * 窗口触发时间=原窗口最后时间+Watermark允许的时间
+     * 延迟触发，但统计还是原窗口内的数据。
+     * <p>
+     * 运用场景：允许迟到X分钟。
+     * <p>
      * 根据时间段，统计滚动窗口间出现单词的频率。
+     * 输入：时间字段，单词，次数
      *
      * @param env
      * @return
      */
-    public static void test2(StreamExecutionEnvironment env) {
+    public static void testWatermark(StreamExecutionEnvironment env) {
+
+        int watermarkTime = 2;
+
+        OutputTag<Tuple2<String, Integer>> lateData = new OutputTag<Tuple2<String, Integer>>("late-data") {
+        };
 
         DataStreamSource<String> dataStream = env.socketTextStream("127.0.0.1", 9999);
         SingleOutputStreamOperator<String> operator = dataStream
-                .assignTimestampsAndWatermarks(new BoundedOutOfOrdernessTimestampExtractor<String>(Time.seconds(0)) {
+                .assignTimestampsAndWatermarks(new BoundedOutOfOrdernessTimestampExtractor<String>(Time.seconds(watermarkTime)) {
                     @Override
                     public long extractTimestamp(String element) {
                         long l = Long.parseLong(element.split(",")[0]);
@@ -95,34 +107,50 @@ public class EventTimeWmTest {
             }
         });
 
-        map.keyBy(x -> {
-                            log.debug("fo:{}", x.f0);
-                            log.debug("f1:{}", x.f1);
-                            return x.f0;
-                        }
-                ).window(TumblingEventTimeWindows.of(Time.seconds(5))).reduce(new ReduceFunction<Tuple2<String, Integer>>() {
+        SingleOutputStreamOperator<Object> window = map.keyBy(x -> x.f0)
+                .window(TumblingEventTimeWindows.of(Time.seconds(5)))
+                .sideOutputLateData(lateData)
+                .reduce(new ReduceFunction<Tuple2<String, Integer>>() {
                     @Override
                     public Tuple2<String, Integer> reduce(Tuple2<String, Integer> value1, Tuple2<String, Integer> value2) throws Exception {
-                        log.debug("value1：{}", JSON.toJSONString(value1));
-                        log.debug("value2：{}", JSON.toJSONString(value2));
-                        return Tuple2.of(value1.f0, value1.f1 + value2.f1);
+                        Tuple2<String, Integer> reduce = Tuple2.of(value1.f0, value1.f1 + value2.f1);
+                        log.debug("reduce：{}", JSON.toJSONString(reduce));
+                        return reduce;
                     }
                 }, new ProcessWindowFunction<Tuple2<String, Integer>, Object, String, TimeWindow>() {
                     @Override
-                    public void process(String s, ProcessWindowFunction<Tuple2<String, Integer>, Object, String, TimeWindow>.Context context, Iterable<Tuple2<String, Integer>> elements, Collector<Object> out) throws Exception {
-                        log.debug("-------------ProcessWindowFunction start----------------");
+                    public void process(String s, ProcessWindowFunction<Tuple2<String, Integer>, Object, String,
+                            TimeWindow>.Context context, Iterable<Tuple2<String, Integer>> elements, Collector<Object> out) throws Exception {
+                        TimeWindow window = context.window();
                         FastDateFormat instance = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
                         for (Tuple2<String, Integer> element : elements) {
-                            out.collect(instance.format(element.f1));
+                            String sb = "\n" +
+                                    "[" +
+                                    "\n" +
+                                    "watermark位置时间:" +
+                                    context.currentWatermark() +
+                                    "\t 延迟触发时间:" +
+                                    (context.currentWatermark() + (watermarkTime * 1000)) +
+                                    "\n" +
+                                    "当前处理时间:" +
+                                    instance.format(context.currentProcessingTime()) +
+                                    "\n" +
+                                    "窗口开始时间:" +
+                                    window.getStart() +
+                                    "\n" +
+                                    "窗口结束时间:" +
+                                    window.getEnd() +
+                                    "\n" +
+                                    "元素:" +
+                                    element +
+                                    "\n" +
+                                    "]";
+                            out.collect(sb);
                         }
-                        log.debug("当前处理时间:{}",context.currentProcessingTime());
-                        TimeWindow window = context.window();
-                        log.debug("窗口开始时间:{}",window.getStart());
-                        log.debug("窗口结束时间:{}",window.getEnd());
-                        log.debug("-------------ProcessWindowFunction end----------------");
                     }
-                })
-                .print();
+                });
+        window.print();
+        window.getSideOutput(lateData).printToErr();
 
     }
 
