@@ -11,7 +11,7 @@ public class WordCount {
         // 创建执行环境
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         // 从文件中读取数据
-        String inputPath = "hello.txt";
+        String inputPath = "E:\\workspace\\huaming\\test\\src\\main\\resources\\data-file\\batch-word-count.txt";
         DataSet<String> inputDataSet = env.readTextFile(inputPath);
         // 空格分词打散之后，对单词进行 groupby 分组，然后用 sum 进行聚合
         DataSet<Tuple2<String, Integer>> wordCountDataSet =
@@ -26,7 +26,8 @@ public class WordCount {
             Integer>> {
         public void flatMap(String value, Collector<Tuple2<String, Integer>> out) throws
                 Exception {
-            String[] words = value.split(" ");
+            System.out.println("11111111111111");
+            String[] words = value.split(",");
             for (String word : words) {
                 out.collect(new Tuple2<String, Integer>(word, 1));
             }
